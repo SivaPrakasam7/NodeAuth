@@ -1,16 +1,16 @@
-
 var express = require('express'),
     path = require('path'),
     mongoose = require('mongoose'),
     bodyParser = require('body-parser'),
     bcrypt = require('bcrypt'),
     passport = require('passport'),
-    GoogleStrategy = require('passport-google-oauth2').Strategy,
-    url = 'mongodb+srv://siva:siva12345@cluster0.yudpn.mongodb.net/nodelogin?retryWrites=true&w=majority';
+    GoogleStrategy = require('passport-google-oauth2').Strategy;
+
+require('dotenv').config();
 
 // Mongoose configuration
 
-mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true });
 
 var con = mongoose.connection;
 
@@ -34,20 +34,19 @@ UserTable = mongoose.model('users', User);
 // app init
 
 const app = express();
-const port = 3000;
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(require('express-session')({ secret: '*&@%VUGHCBIW', resave: false, saveUninitialized: true }));
+app.use(require('express-session')({ secret: process.env.SECRET, resave: false, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Google authendication
 
 passport.use(new GoogleStrategy({
-    clientID: '828539284135-g58rop1ja3k3stkb3m9sglqras33eab5.apps.googleusercontent.com',
-    clientSecret: '0srDFw37NiNJ1wb6jrvQA1gU',
-    callbackURL: 'http://localhost:3000/auth/google/callback',
+    clientID: process.env.GCLIENT_ID,
+    clientSecret: process.env.GSECRET,
+    callbackURL: `${process.env.URL}/auth/google/callback`,
     passReqToCallback: true,
 },
     function (request, accessToken, refreshToken, profile, done) {
@@ -119,4 +118,4 @@ app.get('/logout', function (req, res) {
     res.redirect('/');
 });
 
-app.listen(port, () => { console.log(`http://localhost:${port}`) });
+app.listen(process.env.PORT, () => { console.log(`${process.env.URL}`) });
