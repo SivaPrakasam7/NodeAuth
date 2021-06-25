@@ -2,7 +2,7 @@
 
 Usage
 ----
-Create .env file
+Create .env file<br>
     DB_URL='{Mongodb-connection-url}'<br>
     PORT={Port-number}<br>
     URL='{URL-with-port}'<br>
