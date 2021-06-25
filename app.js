@@ -46,7 +46,7 @@ passport.deserializeUser(function (user, done) {
 
 // ROUTES
 
-// Home page
+// Google authendication routes
 
 app.get('/auth/google', passport.authenticate('google', { scope: ['email', 'profile'] }));
 
@@ -57,6 +57,9 @@ app.get('/', function (req, res) {
     else if (req.user) res.send(`<img src="${req.user.picture}" style="border-radius:100%;"/><h3>Hello ${req.user.displayName}<br>${req.user.email}<h3><br><a href="/logout">Logout</a>`)
     else res.redirect('/login')
 });
+
+
+// Normal login
 
 app.post('/login', function (req, res) {
     var username = req.body.email;
