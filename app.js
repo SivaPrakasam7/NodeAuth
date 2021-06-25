@@ -51,7 +51,7 @@ passport.use(new GoogleStrategy({
     passReqToCallback: true,
 },
     function (request, accessToken, refreshToken, profile, done) {
-        UserTable.findOneAndUpdate({ email: profile.email },{$set:{name: profile.displayName, email: profile.email, accessToken: accessToken}}, function (err, result) {
+        UserTable.findOneAndUpdate({ email: profile.email },{$set:{name: profile.displayName, accessToken: accessToken}}, function (err, result) {
             if (err) throw err;
             if (!result) con.collection('users').insertOne({ name: profile.displayName, email: profile.email, accessToken: accessToken });
         });
