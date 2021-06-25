@@ -11,7 +11,9 @@ var express = require('express'),
 // Mongoose configuration
 
 mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
+
 var con = mongoose.connection;
+
 const User = mongoose.Schema({
     name: { type: String, required: true },
     password: { type: String, required: true },
@@ -26,6 +28,7 @@ const User = mongoose.Schema({
         }
     }, address: { type: String, required: true }, about: { type: String }
 });
+
 UserTable = mongoose.model('users', User);
 
 // app init
@@ -35,11 +38,9 @@ const port = 3000;
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
-
 app.use(require('express-session')({ secret: '*&@%VUGHCBIW', resave: false, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
-
 
 // Google authendication
 
@@ -97,9 +98,7 @@ app.post('/register', function (req, res) {
     bcrypt.genSalt(10, function (err, salt) {
         if (err) throw err;
         bcrypt.hash(password, salt, function (err, hash) {
-            con.collection('users').insertOne({ name: req.body.username, password: hash, mobileNo: req.body.mobileNo, address: req.body.address, about: req.body.about }, function (err, result) {
-                req.session.userID = result.insertedId;
-            });
+            con.collection('users').insertOne({ name: req.body.username, password: hash, mobileNo: req.body.mobileNo, address: req.body.address, about: req.body.about }, function (err, result) { req.session.userID = result.insertedId; });
             res.redirect('/');
         });
     });
