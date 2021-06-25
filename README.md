@@ -13,5 +13,5 @@ Create .env file<br>
 RUN
 ---
     Current-directory# npm install
-        some processing
+        
     Current-directory# node app.js
