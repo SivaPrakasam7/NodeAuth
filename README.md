@@ -1,5 +1,7 @@
 # NodeAuth
 
+    Node js login Google authendication and normal login with mongoose
+
 Usage
 ----
     .env
