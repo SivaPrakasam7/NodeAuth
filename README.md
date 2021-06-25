@@ -1,6 +1,5 @@
 # NodeAuth
-
-    Node js login Google authendication and normal login with mongoose
+Node js login Google authendication and normal login with mongoose
 
 Usage
 ----
