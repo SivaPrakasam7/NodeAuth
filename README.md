@@ -1,9 +1,9 @@
 # NodeAuth
 Node js login Google authendication and normal login with mongodb
 
-Usage
+Config
 ----
-    .env
+    Create .env file and write belows
         DB_URL='{Mongodb-connection-url}'
         PORT={Port-number}
         URL='{URL-with-port}'
