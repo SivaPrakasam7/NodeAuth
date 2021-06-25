@@ -14,19 +14,27 @@ mongoose.connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology
 
 var con = mongoose.connection;
 
+// Schema
+
 const User = new mongoose.Schema({
-    name: { type: String, required: true },
-    password: { type: String, required: true },
+    _id: { type: Object, required: true },
+    name: { type: String, required: true, alias: 'displayName' },
+    email: { type: String, required: true },
+    picture: { type: String, default: 'Update Profile' },
+    accessToken: { type: String, required: true },
     mobileNo: {
-        type: String,
+        type: Number,
         required: true,
+        default: 1111111111,
         validate: {
             validator: function (v) {
                 return /d{10}/.test(v);
             },
             message: '{VALUE} is not valid number'
         }
-    }, address: { type: String, required: true }, about: { type: String }
+    },
+    address: { type: String, required: true, default: 'Address not updated' },
+    about: { type: String, default: 'About not provided' }
 });
 
 UserTable = mongoose.model('users', User);
@@ -49,10 +57,12 @@ passport.use(new GoogleStrategy({
     callbackURL: `${process.env.URL}/auth/google/callback`,
     passReqToCallback: true,
 },
-    function (request, accessToken, refreshToken, profile, done) {
-        UserTable.findOneAndUpdate({ email: profile.email },{$set:{name: profile.displayName, accessToken: accessToken}}, function (err, result) {
+    function (req, accessToken, refreshToken, profile, done) {
+        profile.accessToken=accessToken;
+        req.session.user=new UserTable(profile);
+        UserTable.findOneAndUpdate({ email: profile.email }, {$set:new UserTable(profile)}, function (err, result) {
             if (err) throw err;
-            if (!result) con.collection('users').insertOne({ name: profile.displayName, email: profile.email, accessToken: accessToken });
+            if (!result) con.collection('users').insertOne(new UserTable(profile));
         });
         return done(null, profile);
     }
@@ -67,8 +77,7 @@ passport.deserializeUser(function (user, done) { done(null, user); });
 // Home
 
 app.get('/', function (req, res) {
-    if (req.session.user) res.send(`<h3>Hello ${req.session.user.name}<br>${req.session.user.email}<h3><br><a href="/logout">Logout</a>`)
-    else if (req.user) res.send(`<img src="${req.user.picture}" style="border-radius:100%;"/><h3>Hello ${req.user.displayName}<br>${req.user.email}<h3><br><a href="/logout">Logout</a>`)
+    if (req.session.user) res.send(`<img src="${req.session.user.picture}" style="border-radius:100%;"/><h3>Hello ${req.session.user.name}<br>${req.session.user.email}<h3><br><a href="/logout">Logout</a>`)
     else res.redirect('/login')
 });
 
@@ -76,20 +85,19 @@ app.get('/', function (req, res) {
 
 app.get('/auth/google', passport.authenticate('google', { scope: ['email', 'profile'] }));
 
-app.get('/auth/google/callback', passport.authenticate('google', { successRedirect: '/', failureRedirect: '/login' }), function (err, result) { });
+app.get('/auth/google/callback', passport.authenticate('google', { successRedirect: '/', failureRedirect: '/login' }));
 
 // Normal login
 
 app.post('/login', function (req, res) {
-    var password = req.body.passwd;
-    UserTable.findOne({ name: req.body.email }, function (err, result) {
+    UserTable.findOne({ email: req.body.email }, function (err, result) {
         try {
-            bcrypt.compare(password, result.password, function (err, isPasswordMatch) {
+            bcrypt.compare(req.body.passwd, result.accessToken, function (err, isPasswordMatch) {
                 if (err) throw err;
                 if (isPasswordMatch) {
                     req.session.user = result;
                     res.redirect('/')
-                } else res.send('Invalid credential')
+                } else res.send('Invalid')
             });
         } catch (err) {
             res.send('Invalid')
@@ -100,11 +108,10 @@ app.post('/login', function (req, res) {
 app.get('/register', function (req, res) { res.render('register') });
 
 app.post('/register', function (req, res) {
-    var password = req.body.passwd;
     bcrypt.genSalt(10, function (err, salt) {
         if (err) throw err;
-        bcrypt.hash(password, salt, function (err, hash) {
-            con.collection('users').insertOne({ name: req.body.username, email: req.body.email, password: hash, mobileNo: req.body.mobileNo, address: req.body.address, about: req.body.about }, function (err, result) { req.session.userID = result.insertedId; });
+        bcrypt.hash(req.body.passwd, salt, function (err, hash) {
+            con.collection('users').insertOne(new UserTable({ name: req.body.username, email: req.body.email, accessToken: hash, mobileNo: req.body.mobileNo, address: req.body.address, about: req.body.about }));
             res.redirect('/');
         });
     });
