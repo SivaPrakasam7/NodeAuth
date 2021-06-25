@@ -14,7 +14,7 @@ mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
 
 var con = mongoose.connection;
 
-const User = mongoose.Schema({
+const User = new mongoose.Schema({
     name: { type: String, required: true },
     password: { type: String, required: true },
     mobileNo: {
@@ -47,10 +47,16 @@ app.use(passport.session());
 passport.use(new GoogleStrategy({
     clientID: '828539284135-g58rop1ja3k3stkb3m9sglqras33eab5.apps.googleusercontent.com',
     clientSecret: '0srDFw37NiNJ1wb6jrvQA1gU',
-    callbackURL: 'https://b8cab82c82fd.ngrok.io/auth/google/callback',
+    callbackURL: 'http://localhost:3000/auth/google/callback',
     passReqToCallback: true,
 },
-    function (request, accessToken, refreshToken, profile, done) { return done(null, profile); }
+    function (request, accessToken, refreshToken, profile, done) {
+        UserTable.findOneAndUpdate({ email: profile.email },{$set:{name: profile.displayName, email: profile.email, accessToken: accessToken}}, function (err, result) {
+            if (err) throw err;
+            if (!result) con.collection('users').insertOne({ name: profile.displayName, email: profile.email, accessToken: accessToken });
+        });
+        return done(null, profile);
+    }
 ));
 
 passport.serializeUser(function (user, done) { done(null, user); });
@@ -59,18 +65,19 @@ passport.deserializeUser(function (user, done) { done(null, user); });
 
 // ROUTES
 
-// Google authendication routes
-
-app.get('/auth/google', passport.authenticate('google', { scope: ['email', 'profile'] }));
-
-app.get('/auth/google/callback', passport.authenticate('google', { successRedirect: '/', failureRedirect: '/login' }));
+// Home
 
 app.get('/', function (req, res) {
-    if (req.session.userID) res.send(`Hello ${req.session.userID} <br><a href="/logout">Logout</a>`)
+    if (req.session.user) res.send(`<h3>Hello ${req.session.user.name}<br>${req.session.user.email}<h3><br><a href="/logout">Logout</a>`)
     else if (req.user) res.send(`<img src="${req.user.picture}" style="border-radius:100%;"/><h3>Hello ${req.user.displayName}<br>${req.user.email}<h3><br><a href="/logout">Logout</a>`)
     else res.redirect('/login')
 });
 
+// Google authendication routes
+
+app.get('/auth/google', passport.authenticate('google', { scope: ['email', 'profile'] }));
+
+app.get('/auth/google/callback', passport.authenticate('google', { successRedirect: '/', failureRedirect: '/login' }), function (err, result) { });
 
 // Normal login
 
@@ -81,7 +88,7 @@ app.post('/login', function (req, res) {
             bcrypt.compare(password, result.password, function (err, isPasswordMatch) {
                 if (err) throw err;
                 if (isPasswordMatch) {
-                    req.session.userID = result._id;
+                    req.session.user = result;
                     res.redirect('/')
                 } else res.send('Invalid credential')
             });
@@ -98,7 +105,7 @@ app.post('/register', function (req, res) {
     bcrypt.genSalt(10, function (err, salt) {
         if (err) throw err;
         bcrypt.hash(password, salt, function (err, hash) {
-            con.collection('users').insertOne({ name: req.body.username, password: hash, mobileNo: req.body.mobileNo, address: req.body.address, about: req.body.about }, function (err, result) { req.session.userID = result.insertedId; });
+            con.collection('users').insertOne({ name: req.body.username, email: req.body.email, password: hash, mobileNo: req.body.mobileNo, address: req.body.address, about: req.body.about }, function (err, result) { req.session.userID = result.insertedId; });
             res.redirect('/');
         });
     });
