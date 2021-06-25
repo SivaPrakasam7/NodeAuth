@@ -2,13 +2,13 @@
 
 Usage
 ----
-    Create .env file<br>
-        DB_URL='{Mongodb-connection-url}'<br>
-        PORT={Port-number}<br>
-        URL='{URL-with-port}'<br>
-        GCLIENT_ID='{Google-API-client-id}'<br>
-        GSECRET='{Google-API-Key}'<br>
-        SECRET='{Any-secret-key}'<br>
+    .env
+        DB_URL='{Mongodb-connection-url}'
+        PORT={Port-number}
+        URL='{URL-with-port}'
+        GCLIENT_ID='{Google-API-client-id}'
+        GSECRET='{Google-API-Key}'
+        SECRET='{Any-secret-key}'
 
 RUN
 ---
