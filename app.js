@@ -4,14 +4,16 @@ var express = require('express'),
     bodyParser = require('body-parser'),
     bcrypt = require('bcrypt'),
     passport = require('passport'),
-    UesrTable=require('./models/user'),
+    UesrTable = require('./models/user'),
     GoogleStrategy = require('passport-google-oauth2').Strategy;
 
 require('dotenv').config();
 
+var port = process.env.PORT || 8080;
+
 // Mongoose configuration
 
-mongoose.connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true , useFindAndModify : false});
+mongoose.connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false });
 
 var con = mongoose.connection;
 
@@ -34,9 +36,9 @@ passport.use(new GoogleStrategy({
     passReqToCallback: true,
 },
     function (req, accessToken, refreshToken, profile, done) {
-        profile.accessToken=accessToken;
-        req.session.user=new UserTable(profile);
-        UserTable.findOneAndUpdate({ email: profile.email }, {$set:new UserTable(profile)}, function (err, result) {
+        profile.accessToken = accessToken;
+        req.session.user = new UserTable(profile);
+        UserTable.findOneAndUpdate({ email: profile.email }, { $set: new UserTable(profile) }, function (err, result) {
             if (err) throw err;
             if (!result) con.collection('users').insertOne(new UserTable(profile));
         });
