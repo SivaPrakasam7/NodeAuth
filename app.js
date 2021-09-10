@@ -36,6 +36,7 @@ passport.use(new GoogleStrategy({
     passReqToCallback: true,
 },
     function (req, accessToken, refreshToken, profile, done) {
+        console.log(profile);
         profile.accessToken = accessToken;
         req.session.user = new UserTable(profile);
         UserTable.findOneAndUpdate({ email: profile.email }, { $set: new UserTable(profile) }, function (err, result) {
@@ -61,7 +62,14 @@ app.get('/', function (req, res) {
 
 // Google authendication routes
 
-app.get('/auth/google', passport.authenticate('google', { scope: ['email', 'profile'] }));
+app.get('/auth/google', passport.authenticate('google', {
+    scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/user.phonenumbers.read',
+        'https://www.googleapis.com/auth/user.addresses.read'
+    ]
+}));
 
 app.get('/auth/google/callback', passport.authenticate('google', { successRedirect: '/', failureRedirect: '/login' }));
 
